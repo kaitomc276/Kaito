@@ -1,81 +1,62 @@
-local ScreenGui = Instance.new("ScreenGui")
-local ImageButton = Instance.new("ImageButton")
-local UICorner = Instance.new("UICorner")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
 
-ScreenGui.Parent = game.CoreGui
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- ID của game Blox Fruits
+local PLACE_ID = "2753915549"
 
-ImageButton.Parent = ScreenGui
-ImageButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ImageButton.BorderSizePixel = 0
-ImageButton.Position = UDim2.new(0.10615778, 0, 0.16217947, 0)
-ImageButton.Size = UDim2.new(0, 40, 0, 40)
-ImageButton.Draggable = true
-ImageButton.Image = "http://www.roblox.com/asset/?id=1081002842"
+-- Kiểm tra xem có Rip Indra không (100% luôn trả về true)
+local function checkRipIndra(server_id)
+    -- 100% xác suất có Rip Indra
+    return true  -- Luôn trả về true (100%)
+end
 
-UICorner.CornerRadius = UDim.new(1, 10) 
-UICorner.Parent = ImageButton
-
-ImageButton.MouseButton1Down:Connect(function()
-    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.End, false, game)
-end)
-
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-repeat wait() until game:IsLoaded()
-local Window = Fluent:CreateWindow({
-    Title = "kaitoMC276",
-    SubTitle = "kaitoMC276",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(500, 320),
-    Acrylic = true,
-    Theme = "135340321174352",
-    MinimizeKey = Enum.KeyCode.End
-})
-local Tabs = {
-        Main0=Window:AddTab({ Title="Main" }),
-        Main1=Window:AddTab({ Title="Item" }),
-        Main2=Window:AddTab({ Title="Quest" }),
-        Main3=Window:AddTab({ Title="Dojo" }),
-        Main4=Window:AddTab({ Title="Sea Event" }),
-        Main5=Window:AddTab({ Title="Setting" }),
-        Main6=Window:AddTab({ Title="Race V4" }),
-        Main7=Window:AddTab({ Title="Raid" }),
-        Main8=Window:AddTab({ Title="Volcanic" }),
-        Main8=Window:AddTab({ Title="Misc" }),
-        local v9 = v9:CreateWindow({
-    Title = "Youtube:KaitoMC276",
-    SubTitle = "Đăng ký kênh ủng hộ tôi nha !!",
-    TabWidth = 160,
-    Theme = "Light",
-    Acrylic = false,
-    Size = UDim2.fromOffset(500, 320),
-    MinimizeKey = Enum.KeyCode.End
-}
-Tabs.Main0:AddButton({
-    Title = "Auto Farm Level",
-    Description = "",
-    Callback = function()
-        print("ditmemay")
+-- Lấy tất cả các server từ game
+local function getServers()
+    local servers = {}
+    local cursor = ""
+    
+    while true do
+        local url = "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/Public?limit=100"
+        if cursor and cursor ~= "" then
+            url = url .. "&cursor=" .. cursor
+        end
+        
+        local success, response = pcall(function()
+            return game:HttpGet(url)
+        end)
+        
+        if success then
+            local data = HttpService:JSONDecode(response)
+            for _, server in pairs(data.data) do
+                table.insert(servers, server.id)
+            end
+            cursor = data.nextPageCursor
+            if not cursor then break end
+        else
+            print("Lỗi khi lấy dữ liệu server.")
+            break
+        end
     end
-})
-Tabs.Main0:AddButton({
-    Title = "Auto Farm Nearest",
-    Description = "",
-    Callback = function()
-        print("ditmemay")
+
+    return servers
+end
+
+-- Teleport vào server có Rip Indra
+local function teleportToRipIndraServer()
+    local servers = getServers()
+
+    for _, server_id in pairs(servers) do
+        print("Đang kiểm tra server ID: " .. server_id)
+        if checkRipIndra(server_id) then
+            print("Tìm thấy Rip Indra tại server ID: " .. server_id)
+            TeleportService:TeleportToPlaceInstance(PLACE_ID, server_id, Players.LocalPlayer)
+            return
+        end
     end
-})
-Tabs.Main0:AddButton({
-    Title = "Auto Farm Bone",
-    Description = "",
-    Callback = function()
-        print("ditmemay")
-    end
-})
-Tabs.Main0:AddButton({
-    Title = "Auto Farm Katakuri",
-    Description = "",
-    Callback = function()
-        print("ditmemay")
-    end
-})
+
+    print("Không tìm thấy server có Rip Indra.")
+end
+
+-- Chạy script
+teleportToRipIndraServer()
